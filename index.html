@@ -95,6 +95,12 @@ function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
     skeleton = new spine.Skeleton(skeletonData);
     skeleton.setSkinByName("default");
 
+    // Disable physics by removing any physics references
+    if (skeleton.physics) {
+        delete skeleton.physics;  // This removes any physics data if it exists
+        console.warn("Physics data found and removed.");
+    }
+
     let animationStateData = new spine.AnimationStateData(skeleton.data);
     animationState = new spine.AnimationState(animationStateData);
 
@@ -103,14 +109,6 @@ function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
 
     bounds = calculateBounds(skeleton);
 
-    // Disable physics by ensuring no physics-related calls are made
-    if (!skeleton.physics) {
-        console.warn("No physics data found. Physics calculations will be skipped.");
-    } else {
-        // If you actually need to handle physics, you'd need to implement that here
-        console.log("Physics data detected, but it's not needed for this skeleton.");
-    }
-
     return {
         skeleton: skeleton,
         state: animationState,
@@ -118,6 +116,7 @@ function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
         premultipliedAlpha: premultipliedAlpha
     };
 }
+
         function calculateBounds(skeleton) {
             skeleton.setToSetupPose();
             skeleton.updateWorldTransform();

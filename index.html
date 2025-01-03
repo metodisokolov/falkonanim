@@ -23,7 +23,10 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
+
+    <!-- Correct path to the spine-webgl.js runtime -->
     <script src="https://unpkg.com/@esotericsoftware/spine-webgl@4.2.61/dist/iife/spine-webgl.js"></script>
+    
     <script>
         let canvas, ctx, shader, batcher, mvp, skeletonRenderer, assetManager;
         let lastFrameTime, skeleton, animationState, bounds;
@@ -74,17 +77,18 @@
 
             skeletonLoader.scale = 1;
             let skeletonData = skeletonLoader.readSkeletonData(assetManager.require(name));
-            let skeleton = new spine.Skeleton(skeletonData);
+            skeleton = new spine.Skeleton(skeletonData);
             skeleton.setSkinByName("default");
 
             let animationStateData = new spine.AnimationStateData(skeleton.data);
-            let animationState = new spine.AnimationState(animationStateData);
+            animationState = new spine.AnimationState(animationStateData);
 
             // Set the 'loop1' animation instead of the default one
             animationState.setAnimation(0, "loop1", true);  // Loop1 will play
 
-            let bounds = calculateSetupPoseBounds(skeleton);
+            bounds = calculateBounds(skeleton);  // Updated bounds function
 
+            // Returning skeleton, animationState, and bounds so they can be used in the render function
             return {
                 skeleton: skeleton,
                 state: animationState,
@@ -113,10 +117,12 @@
             gl.clearColor(0.0, 0.0, 0.0, 1);
             gl.clear(gl.COLOR_BUFFER_BIT);
 
+            // Update the animation state and apply it to the skeleton
             animationState.update(delta);
             animationState.apply(skeleton);
             skeleton.updateWorldTransform();
 
+            // Bind shader and render the skeleton
             shader.bind();
             shader.setUniformi(spine.Shader.SAMPLER, 0);
             shader.setUniform4x4f(spine.Shader.MVP_MATRIX, mvp.values);

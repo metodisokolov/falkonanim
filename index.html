@@ -1,158 +1,136 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bird Animation</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
+<script>
+    let canvas, ctx, shader, batcher, mvp, skeletonRenderer, assetManager;
+    let lastFrameTime, skeleton, animationState, bounds;
+
+    function init() {
+        canvas = document.getElementById("canvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const config = { alpha: true }; // Enable transparency
+        ctx = new spine.ManagedWebGLRenderingContext(canvas, config);
+
+        if (!ctx.gl) {
+            alert("WebGL is unavailable.");
+            return;
         }
 
-        body, html {
-            height: 100%;
-        }
+        shader = spine.Shader.newTwoColoredTextured(ctx);
+        batcher = new spine.PolygonBatcher(ctx);
+        mvp = new spine.Matrix4();
+        mvp.ortho2d(0, 0, canvas.width - 1, canvas.height - 1);
 
-        canvas {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
-</head>
-<body>
-    <canvas id="canvas"></canvas>
+        skeletonRenderer = new spine.SkeletonRenderer(ctx);
 
-    <!-- Spine WebGL Runtime -->
-    <script src="https://unpkg.com/@esotericsoftware/spine-webgl@4.2.61/dist/iife/spine-webgl.js"></script>
+        // Load all textures and the atlas
+        assetManager = new spine.AssetManager(ctx, "https://metodisokolov.github.io/falkonanim/bird/");
+        assetManager.loadText("bird_Export.json");
+        assetManager.loadText("bird_Export.atlas");
+        assetManager.loadTexture("bird_Export.png");
+        assetManager.loadTexture("bird_Export_2.png");
+        assetManager.loadTexture("bird_Export_3.png");
 
-    <script>
-        let canvas, ctx, shader, batcher, mvp, skeletonRenderer, assetManager;
-        let lastFrameTime, skeleton, animationState, bounds;
-
-function init() {
-    canvas = document.getElementById("canvas");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const config = { alpha: true }; // Enable transparency
-    ctx = new spine.ManagedWebGLRenderingContext(canvas, config);
-
-    if (!ctx.gl) {
-        alert("WebGL is unavailable.");
-        return;
+        requestAnimationFrame(load);
     }
 
-    shader = spine.Shader.newTwoColoredTextured(ctx);
-    batcher = new spine.PolygonBatcher(ctx);
-    mvp = new spine.Matrix4();
-    mvp.ortho2d(0, 0, canvas.width - 1, canvas.height - 1);
+    function load() {
+        if (assetManager.isLoadingComplete()) {
+            loadSkeleton("bird_Export.json", "loop1", true); // Replace "loop1" with your actual animation
+            lastFrameTime = Date.now() / 1000;
+            render();
+        } else {
+            requestAnimationFrame(load);
+        }
+    }
 
-    skeletonRenderer = new spine.SkeletonRenderer(ctx);
+    function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
+        // Parse the atlas and associate regions with textures
+        let atlas = new spine.TextureAtlas(assetManager.require(name.replace(".json", ".atlas")), (path) => {
+            return assetManager.require(path);
+        });
 
-    // Load all textures and the atlas
-    assetManager = new spine.AssetManager(ctx, "https://metodisokolov.github.io/falkonanim/bird/");
-    assetManager.loadText("bird_Export.json");
-    assetManager.loadText("bird_Export.atlas");
-    assetManager.loadTexture("bird_Export.png");
-    assetManager.loadTexture("bird_Export_2.png");
-    assetManager.loadTexture("bird_Export_3.png");
+        let atlasLoader = new spine.AtlasAttachmentLoader(atlas);
+        let skeletonLoader = new spine.SkeletonJson(atlasLoader);
 
-    requestAnimationFrame(load);
-}
+        skeletonLoader.scale = 1;
+        let skeletonData = skeletonLoader.readSkeletonData(assetManager.require(name));
+        skeleton = new spine.Skeleton(skeletonData);
+        skeleton.setSkinByName("default");
 
-function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
-    // Parse the atlas and associate regions with textures
-    let atlas = new spine.TextureAtlas(assetManager.require(name.replace(".json", ".atlas")), (path) => {
-        return assetManager.require(path);
-    });
+        let animationStateData = new spine.AnimationStateData(skeleton.data);
+        animationState = new spine.AnimationState(animationStateData);
 
-    let atlasLoader = new spine.AtlasAttachmentLoader(atlas);
-    let skeletonLoader = new spine.SkeletonJson(atlasLoader);
+        // Set initial animation
+        animationState.setAnimation(0, initialAnimation, true);
 
-    skeletonLoader.scale = 1;
-    let skeletonData = skeletonLoader.readSkeletonData(assetManager.require(name));
-    skeleton = new spine.Skeleton(skeletonData);
-    skeleton.setSkinByName("default");
+        bounds = calculateBounds(skeleton);
 
-    let animationStateData = new spine.AnimationStateData(skeleton.data);
-    animationState = new spine.AnimationState(animationStateData);
+        return {
+            skeleton: skeleton,
+            state: animationState,
+            bounds: bounds,
+            premultipliedAlpha: premultipliedAlpha
+        };
+    }
 
-    // Set initial animation
-    animationState.setAnimation(0, initialAnimation, true);
+    function calculateBounds(skeleton) {
+        skeleton.setToSetupPose();
+        skeleton.updateWorldTransform();
+        const offset = new spine.Vector2();
+        const size = new spine.Vector2();
+        skeleton.getBounds(offset, size, []);
+        return { offset, size };
+    }
 
-    bounds = calculateBounds(skeleton);
+    function render() {
+        const gl = ctx.gl;
+        const now = Date.now() / 1000;
+        const delta = now - lastFrameTime;
+        lastFrameTime = now;
 
-    return {
-        skeleton: skeleton,
-        state: animationState,
-        bounds: bounds,
-        premultipliedAlpha: premultipliedAlpha
-    };
-}
+        resizeCanvas();
 
+        gl.clearColor(0.0, 0.0, 0.0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
-        function calculateBounds(skeleton) {
-            skeleton.setToSetupPose();
-            skeleton.updateWorldTransform();
-            const offset = new spine.Vector2();
-            const size = new spine.Vector2();
-            skeleton.getBounds(offset, size, []);
-            return { offset, size };
+        // Update the animation state and apply it to the skeleton
+        animationState.update(delta);
+        animationState.apply(skeleton);
+        skeleton.updateWorldTransform();
+
+        // Bind shader and render the skeleton
+        shader.bind();
+        shader.setUniformi(spine.Shader.SAMPLER, 0);
+        shader.setUniform4x4f(spine.Shader.MVP_MATRIX, mvp.values);
+
+        batcher.begin(shader);
+        skeletonRenderer.premultipliedAlpha = true;
+        skeletonRenderer.draw(batcher, skeleton);
+        batcher.end();
+
+        shader.unbind();
+        requestAnimationFrame(render);
+    }
+
+    function resizeCanvas() {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+
+        if (canvas.width !== width || canvas.height !== height) {
+            canvas.width = width;
+            canvas.height = height;
         }
 
-        function render() {
-            const gl = ctx.gl;
-            const now = Date.now() / 1000;
-            const delta = now - lastFrameTime;
-            lastFrameTime = now;
+        const centerX = bounds.offset.x + bounds.size.x / 2;
+        const centerY = bounds.offset.y + bounds.size.y / 2;
+        const scale = Math.max(bounds.size.x / width, bounds.size.y / height) * 1.5;
 
-            resizeCanvas();
+        const scaledWidth = width * scale;
+        const scaledHeight = height * scale;
 
-            gl.clearColor(0.0, 0.0, 0.0, 1);
-            gl.clear(gl.COLOR_BUFFER_BIT);
+        mvp.ortho2d(centerX - scaledWidth / 2, centerY - scaledHeight / 2, scaledWidth, scaledHeight);
+        ctx.gl.viewport(0, 0, width, height);
+    }
 
-            // Update the animation state and apply it to the skeleton
-            animationState.update(delta);
-            animationState.apply(skeleton);
-            skeleton.updateWorldTransform();
-
-            // Bind shader and render the skeleton
-            shader.bind();
-            shader.setUniformi(spine.Shader.SAMPLER, 0);
-            shader.setUniform4x4f(spine.Shader.MVP_MATRIX, mvp.values);
-
-            batcher.begin(shader);
-            skeletonRenderer.premultipliedAlpha = true;
-            skeletonRenderer.draw(batcher, skeleton);
-            batcher.end();
-
-            shader.unbind();
-            requestAnimationFrame(render);
-        }
-
-        function resizeCanvas() {
-            const width = canvas.clientWidth;
-            const height = canvas.clientHeight;
-
-            if (canvas.width !== width || canvas.height !== height) {
-                canvas.width = width;
-                canvas.height = height;
-            }
-
-            const centerX = bounds.offset.x + bounds.size.x / 2;
-            const centerY = bounds.offset.y + bounds.size.y / 2;
-            const scale = Math.max(bounds.size.x / width, bounds.size.y / height) * 1.5;
-
-            const scaledWidth = width * scale;
-            const scaledHeight = height * scale;
-
-            mvp.ortho2d(centerX - scaledWidth / 2, centerY - scaledHeight / 2, scaledWidth, scaledHeight);
-            ctx.gl.viewport(0, 0, width, height);
-        }
-
-        init();
-    </script>
-</body>
-</html>
+    init();
+</script>

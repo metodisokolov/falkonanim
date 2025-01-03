@@ -6,59 +6,57 @@
 </head>
 <body>
   <canvas id="mascotCanvas" width="800" height="600"></canvas>
+  <script src="spine-webgl.js"></script> <!-- Load Spine WebGL runtime -->
+
   <script>
-    <script src="spine-webgl.js"></script> <!-- Load Spine WebGL runtime -->
-
-<script>
-  // Initialize Spine objects
-  const spineData = new spine.SkeletonJson(new spine.AtlasAttachmentLoader(atlas)); // Load your atlas and JSON
-  const skeleton = new spine.Skeleton(spineData);
-  const state = new spine.AnimationState(new spine.AnimationStateData(skeleton.data));
-
-  // Configure mixing transitions
-  const animationStateData = state.data;
-  animationStateData.setMix("loop1", "loop2", 0.2); // Smooth transition between Loop 1 and Loop 2
-  animationStateData.setMix("loop2", "loop1", 0.2); // Smooth return to Loop 1
-  animationStateData.setMix("loop1", "smoking", 0.3); // Smooth transition from Loop 1 to Smoking
-  animationStateData.setMix("smoking", "loop1", 0.3); // Smooth return to Loop 1
-
-  // Start Loop 1 (constant looping animation)
-  state.setAnimation(0, "loop1", true); // Looping animation on track 0
-
-  // Function to play Loop 2 with Loop 1 at random intervals
-  function playLoop2() {
-    // Play Loop 2 exactly once on track 1 (overlapping with Loop 1)
-    state.setAnimation(1, "loop2", false);
-
-    // Randomly schedule the next Loop 2 playback
-    const nextPlayTime = Math.random() * 4000 + 3000; // Random interval between 3-7 seconds
-    setTimeout(playLoop2, nextPlayTime);
-  }
-// Start Loop 2 schedule
-  playLoop2();
-
-  // Function to trigger "smoking" animation
-  function onNewFollower() {
-    // Clear Loop 2 temporarily (ensure focus on Smoking animation)
-    state.clearTrack(1);
-
-    // Play "smoking" animation on track 0 (overrides Loop 1 temporarily)
-    state.setAnimation(0, "smoking", false);
-
-    // Queue Loop 1 to resume after "smoking"
-    state.addAnimation(0, "loop1", true, 0);
-
-    // Resume Loop 2 schedule after Smoking animation
-    const smokingDuration = state.data.skeletonData.findAnimation("smoking").duration;
-    setTimeout(playLoop2, smokingDuration * 1000 + 100); // Add small buffer after Smoking ends
-  }
-
-  // Simulate follower event (replace with your actual event listener)
-  setInterval(() => {
-    console.log("New follower detected!");
-    onNewFollower();
-  }, 15000); // Trigger every 15 seconds for testing
-</script>
+    // Initialize Spine objects
+    const spineData = new spine.SkeletonJson(new spine.AtlasAttachmentLoader(atlas)); // Load your atlas and JSON
+    const skeleton = new spine.Skeleton(spineData);
+    const state = new spine.AnimationState(new spine.AnimationStateData(skeleton.data));
+  
+    // Configure mixing transitions
+    const animationStateData = state.data;
+    animationStateData.setMix("loop1", "loop2", 0.2); // Smooth transition between Loop 1 and Loop 2
+    animationStateData.setMix("loop2", "loop1", 0.2); // Smooth return to Loop 1
+    animationStateData.setMix("loop1", "smoking", 0.3); // Smooth transition from Loop 1 to Smoking
+    animationStateData.setMix("smoking", "loop1", 0.3); // Smooth return to Loop 1
+  
+    // Start Loop 1 (constant looping animation)
+    state.setAnimation(0, "loop1", true); // Looping animation on track 0
+  
+    // Function to play Loop 2 with Loop 1 at random intervals
+    function playLoop2() {
+      // Play Loop 2 exactly once on track 1 (overlapping with Loop 1)
+      state.setAnimation(1, "loop2", false);
+  
+      // Randomly schedule the next Loop 2 playback
+      const nextPlayTime = Math.random() * 4000 + 3000; // Random interval between 3-7 seconds
+      setTimeout(playLoop2, nextPlayTime);
+    }
+  // Start Loop 2 schedule
+    playLoop2();
+  
+    // Function to trigger "smoking" animation
+    function onNewFollower() {
+      // Clear Loop 2 temporarily (ensure focus on Smoking animation)
+      state.clearTrack(1);
+  
+      // Play "smoking" animation on track 0 (overrides Loop 1 temporarily)
+      state.setAnimation(0, "smoking", false);
+  
+      // Queue Loop 1 to resume after "smoking"
+      state.addAnimation(0, "loop1", true, 0);
+  
+      // Resume Loop 2 schedule after Smoking animation
+      const smokingDuration = state.data.skeletonData.findAnimation("smoking").duration;
+      setTimeout(playLoop2, smokingDuration * 1000 + 100); // Add small buffer after Smoking ends
+    }
+  
+    // Simulate follower event (replace with your actual event listener)
+    setInterval(() => {
+      console.log("New follower detected!");
+      onNewFollower();
+    }, 15000); // Trigger every 15 seconds for testing
   </script>
 </body>
 </html>

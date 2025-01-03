@@ -4,6 +4,11 @@
 
     function init() {
         canvas = document.getElementById("canvas");
+        if (!canvas) {
+            console.error("Canvas element not found.");
+            return;
+        }
+
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -42,6 +47,11 @@
             requestAnimationFrame(load);
         }
     }
+
+    // Ensure the init function is called after DOM is fully loaded
+    document.addEventListener("DOMContentLoaded", init);
+</script>
+
 
     function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
         // Parse the atlas and associate regions with textures

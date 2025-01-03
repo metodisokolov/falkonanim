@@ -52,6 +52,7 @@
                 return;
             }
 
+            // Create shader, batcher, and other necessary objects
             shader = spine.Shader.newTwoColoredTextured(ctx);
             batcher = new spine.PolygonBatcher(ctx);
             mvp = new spine.Matrix4();
@@ -115,7 +116,7 @@
             skeleton.updateWorldTransform();
             const offset = new spine.Vector2();
             const size = new spine.Vector2();
-            skeleton.getBounds(offset, size, []);
+            skeleton.getBounds(offset, size, []);  // Get the bounds of the skeleton
             return { offset, size };
         }
 
@@ -127,7 +128,8 @@
 
             resizeCanvas();
 
-            gl.clearColor(0.0, 0.0, 0.0, 1);
+            // Clear the WebGL context and set background color
+            gl.clearColor(0.0, 0.0, 0.0, 1); // Black background with full transparency
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             // Update the animation state and apply it to the skeleton

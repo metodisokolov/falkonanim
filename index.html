@@ -59,7 +59,7 @@
 
         function load() {
             if (assetManager.isLoadingComplete()) {
-                loadSkeleton("bird/bird_export.json", "loop1", true); // Loop1 animation will play
+                loadSkeleton("https://metodisokolov.github.io/falkonanim/bird/bird_export.json", "loop1", true); // Loop1 animation will play
                 lastFrameTime = Date.now() / 1000;
                 requestAnimationFrame(render);
             } else {

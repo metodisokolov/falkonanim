@@ -23,7 +23,7 @@
 </head>
 <body>
     <canvas id="canvas"></canvas>
-    <script src="../dist/iife/spine-webgl.js"></script>
+    <script src="https://metodisokolov.github.io/falkonanim/dist/iife/spine-webgl.js"></script>
     <script>
         let canvas, ctx, shader, batcher, mvp, skeletonRenderer, assetManager;
         let lastFrameTime, skeleton, animationState, bounds;
@@ -47,9 +47,9 @@
             mvp.ortho2d(0, 0, canvas.width - 1, canvas.height - 1);
 
             skeletonRenderer = new spine.SkeletonRenderer(ctx);
-            assetManager = new spine.AssetManager(ctx, "bird/");
+            assetManager = new spine.AssetManager(ctx, "https://metodisokolov.github.io/falkonanim/bird/");
 
-            // Load assets for bird animation
+            // Load assets for bird animation (corrected URLs)
             assetManager.loadText("https://metodisokolov.github.io/falkonanim/bird/bird_export.json");
             assetManager.loadText("https://metodisokolov.github.io/falkonanim/bird/bird_export.atlas");
             assetManager.loadTexture("https://metodisokolov.github.io/falkonanim/bird/bird_export.png");
@@ -59,7 +59,7 @@
 
         function load() {
             if (assetManager.isLoadingComplete()) {
-                loadSkeleton("bird/bird_export.json", "fly", true);
+                loadSkeleton("bird/bird_export.json", "loop1", true); // Loop1 animation will play
                 lastFrameTime = Date.now() / 1000;
                 requestAnimationFrame(render);
             } else {
@@ -67,32 +67,31 @@
             }
         }
 
-		function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
-    let atlas = assetManager.require(name.replace(".json", ".atlas"));
-    let atlasLoader = new spine.AtlasAttachmentLoader(atlas);
-    let skeletonLoader = new spine.SkeletonJson(atlasLoader);
+        function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
+            let atlas = assetManager.require(name.replace(".json", ".atlas"));
+            let atlasLoader = new spine.AtlasAttachmentLoader(atlas);
+            let skeletonLoader = new spine.SkeletonJson(atlasLoader);
 
-    skeletonLoader.scale = 1;
-    let skeletonData = skeletonLoader.readSkeletonData(assetManager.require(name));
-    let skeleton = new spine.Skeleton(skeletonData);
-    skeleton.setSkinByName("default");
+            skeletonLoader.scale = 1;
+            let skeletonData = skeletonLoader.readSkeletonData(assetManager.require(name));
+            let skeleton = new spine.Skeleton(skeletonData);
+            skeleton.setSkinByName("default");
 
-    let animationStateData = new spine.AnimationStateData(skeleton.data);
-    let animationState = new spine.AnimationState(animationStateData);
-    
-    // Set 'loop1' animation instead of the default one
-    animationState.setAnimation(0, "loop1", true);  // Use "loop1" here
+            let animationStateData = new spine.AnimationStateData(skeleton.data);
+            let animationState = new spine.AnimationState(animationStateData);
 
-    let bounds = calculateSetupPoseBounds(skeleton);
+            // Set the 'loop1' animation instead of the default one
+            animationState.setAnimation(0, "loop1", true);  // Loop1 will play
 
-    return {
-        skeleton: skeleton,
-        state: animationState,
-        bounds: bounds,
-        premultipliedAlpha: premultipliedAlpha
-    };
-}
+            let bounds = calculateSetupPoseBounds(skeleton);
 
+            return {
+                skeleton: skeleton,
+                state: animationState,
+                bounds: bounds,
+                premultipliedAlpha: premultipliedAlpha
+            };
+        }
 
         function calculateBounds(skeleton) {
             skeleton.setToSetupPose();

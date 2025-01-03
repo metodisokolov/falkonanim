@@ -31,70 +31,67 @@
         let canvas, ctx, shader, batcher, mvp, skeletonRenderer, assetManager;
         let lastFrameTime, skeleton, animationState, bounds;
 
-        function init() {
-            canvas = document.getElementById("canvas");
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+function init() {
+    canvas = document.getElementById("canvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-            const config = { alpha: true }; // Enable transparency
-            ctx = new spine.ManagedWebGLRenderingContext(canvas, config);
+    const config = { alpha: true }; // Enable transparency
+    ctx = new spine.ManagedWebGLRenderingContext(canvas, config);
 
-            if (!ctx.gl) {
-                alert("WebGL is unavailable.");
-                return;
-            }
+    if (!ctx.gl) {
+        alert("WebGL is unavailable.");
+        return;
+    }
 
-            shader = spine.Shader.newTwoColoredTextured(ctx);
-            batcher = new spine.PolygonBatcher(ctx);
-            mvp = new spine.Matrix4();
-            mvp.ortho2d(0, 0, canvas.width - 1, canvas.height - 1);
+    shader = spine.Shader.newTwoColoredTextured(ctx);
+    batcher = new spine.PolygonBatcher(ctx);
+    mvp = new spine.Matrix4();
+    mvp.ortho2d(0, 0, canvas.width - 1, canvas.height - 1);
 
-            skeletonRenderer = new spine.SkeletonRenderer(ctx);
-            assetManager = new spine.AssetManager(ctx, "https://metodisokolov.github.io/falkonanim/bird/");
+    skeletonRenderer = new spine.SkeletonRenderer(ctx);
 
-            // Load assets for bird animation
-            assetManager.loadText("bird_Export.json");
-            assetManager.loadText("bird_Export.atlas");
-            assetManager.loadTexture("bird_Export.png");
+    // Load all textures and the atlas
+    assetManager = new spine.AssetManager(ctx, "https://metodisokolov.github.io/falkonanim/bird/");
+    assetManager.loadText("bird_Export.json");
+    assetManager.loadText("bird_Export.atlas");
+    assetManager.loadTexture("bird_Export.png");
+    assetManager.loadTexture("bird_Export_2.png");
+    assetManager.loadTexture("bird_Export_3.png");
 
-            requestAnimationFrame(load);
-        }
+    requestAnimationFrame(load);
+}
 
-        function load() {
-            if (assetManager.isLoadingComplete()) {
-                loadSkeleton("bird_Export.json", "loop1", true);
-                lastFrameTime = Date.now() / 1000;
-                requestAnimationFrame(render);
-            } else {
-                requestAnimationFrame(load);
-            }
-        }
+function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
+    // Parse the atlas and associate regions with textures
+    let atlas = new spine.TextureAtlas(assetManager.require(name.replace(".json", ".atlas")), (path) => {
+        return assetManager.require(path);
+    });
 
-        function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
-            let atlas = assetManager.require(name.replace(".json", ".atlas"));
-            let atlasLoader = new spine.AtlasAttachmentLoader(atlas);
-            let skeletonLoader = new spine.SkeletonJson(atlasLoader);
+    let atlasLoader = new spine.AtlasAttachmentLoader(atlas);
+    let skeletonLoader = new spine.SkeletonJson(atlasLoader);
 
-            skeletonLoader.scale = 1;
-            let skeletonData = skeletonLoader.readSkeletonData(assetManager.require(name));
-            skeleton = new spine.Skeleton(skeletonData);
-            skeleton.setSkinByName("default");
+    skeletonLoader.scale = 1;
+    let skeletonData = skeletonLoader.readSkeletonData(assetManager.require(name));
+    skeleton = new spine.Skeleton(skeletonData);
+    skeleton.setSkinByName("default");
 
-            let animationStateData = new spine.AnimationStateData(skeleton.data);
-            animationState = new spine.AnimationState(animationStateData);
+    let animationStateData = new spine.AnimationStateData(skeleton.data);
+    animationState = new spine.AnimationState(animationStateData);
 
-            // Set the animation
-            animationState.setAnimation(0, initialAnimation, true);
+    // Set initial animation
+    animationState.setAnimation(0, initialAnimation, true);
 
-            bounds = calculateBounds(skeleton);
+    bounds = calculateBounds(skeleton);
 
-            return {
-                skeleton: skeleton,
-                state: animationState,
-                bounds: bounds,
-                premultipliedAlpha: premultipliedAlpha
-            };
-        }
+    return {
+        skeleton: skeleton,
+        state: animationState,
+        bounds: bounds,
+        premultipliedAlpha: premultipliedAlpha
+    };
+}
+
 
         function calculateBounds(skeleton) {
             skeleton.setToSetupPose();

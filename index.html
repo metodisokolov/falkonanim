@@ -103,10 +103,12 @@ function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
 
     bounds = calculateBounds(skeleton);
 
-    // Disable physics if it's undefined or not required
+    // Disable physics by ensuring no physics-related calls are made
     if (!skeleton.physics) {
-        // Bypass or handle any physics-related calls here
         console.warn("No physics data found. Physics calculations will be skipped.");
+    } else {
+        // If you actually need to handle physics, you'd need to implement that here
+        console.log("Physics data detected, but it's not needed for this skeleton.");
     }
 
     return {
@@ -116,7 +118,6 @@ function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
         premultipliedAlpha: premultipliedAlpha
     };
 }
-
         function calculateBounds(skeleton) {
             skeleton.setToSetupPose();
             skeleton.updateWorldTransform();

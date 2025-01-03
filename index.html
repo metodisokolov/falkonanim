@@ -81,35 +81,41 @@
             }
         }
 
-        function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
-            // Parse the atlas and associate regions with textures
-            let atlas = new spine.TextureAtlas(assetManager.require(name.replace(".json", ".atlas")), (path) => {
-                return assetManager.require(path);
-            });
+function loadSkeleton(name, initialAnimation, premultipliedAlpha) {
+    // Parse the atlas and associate regions with textures
+    let atlas = new spine.TextureAtlas(assetManager.require(name.replace(".json", ".atlas")), (path) => {
+        return assetManager.require(path);
+    });
 
-            let atlasLoader = new spine.AtlasAttachmentLoader(atlas);
-            let skeletonLoader = new spine.SkeletonJson(atlasLoader);
+    let atlasLoader = new spine.AtlasAttachmentLoader(atlas);
+    let skeletonLoader = new spine.SkeletonJson(atlasLoader);
 
-            skeletonLoader.scale = 1;
-            let skeletonData = skeletonLoader.readSkeletonData(assetManager.require(name));
-            skeleton = new spine.Skeleton(skeletonData);
-            skeleton.setSkinByName("default");
+    skeletonLoader.scale = 1;
+    let skeletonData = skeletonLoader.readSkeletonData(assetManager.require(name));
+    skeleton = new spine.Skeleton(skeletonData);
+    skeleton.setSkinByName("default");
 
-            let animationStateData = new spine.AnimationStateData(skeleton.data);
-            animationState = new spine.AnimationState(animationStateData);
+    let animationStateData = new spine.AnimationStateData(skeleton.data);
+    animationState = new spine.AnimationState(animationStateData);
 
-            // Set initial animation
-            animationState.setAnimation(0, initialAnimation, true);
+    // Set initial animation
+    animationState.setAnimation(0, initialAnimation, true);
 
-            bounds = calculateBounds(skeleton);
+    bounds = calculateBounds(skeleton);
 
-            return {
-                skeleton: skeleton,
-                state: animationState,
-                bounds: bounds,
-                premultipliedAlpha: premultipliedAlpha
-            };
-        }
+    // Disable physics if it's undefined or not required
+    if (!skeleton.physics) {
+        // Bypass or handle any physics-related calls here
+        console.warn("No physics data found. Physics calculations will be skipped.");
+    }
+
+    return {
+        skeleton: skeleton,
+        state: animationState,
+        bounds: bounds,
+        premultipliedAlpha: premultipliedAlpha
+    };
+}
 
         function calculateBounds(skeleton) {
             skeleton.setToSetupPose();

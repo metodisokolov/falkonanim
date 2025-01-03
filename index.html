@@ -24,9 +24,9 @@
 <body>
     <canvas id="canvas"></canvas>
 
-    <!-- Correct path to the spine-webgl.js runtime -->
+    <!-- Spine WebGL Runtime -->
     <script src="https://unpkg.com/@esotericsoftware/spine-webgl@4.2.61/dist/iife/spine-webgl.js"></script>
-    
+
     <script>
         let canvas, ctx, shader, batcher, mvp, skeletonRenderer, assetManager;
         let lastFrameTime, skeleton, animationState, bounds;
@@ -52,18 +52,17 @@
             skeletonRenderer = new spine.SkeletonRenderer(ctx);
             assetManager = new spine.AssetManager(ctx, "https://metodisokolov.github.io/falkonanim/bird/");
 
-            // Load assets for bird animation (corrected URLs)
-            assetManager.loadText("https://metodisokolov.github.io/falkonanim/bird/bird_Export.json");
-            assetManager.loadText("https://metodisokolov.github.io/falkonanim/bird/bird_Export.atlas");
-            assetManager.loadTexture("https://metodisokolov.github.io/falkonanim/bird/bird_Export.png");
-
+            // Load assets for bird animation
+            assetManager.loadText("bird_Export.json");
+            assetManager.loadText("bird_Export.atlas");
+            assetManager.loadTexture("bird_Export.png");
 
             requestAnimationFrame(load);
         }
 
         function load() {
             if (assetManager.isLoadingComplete()) {
-                loadSkeleton("https://metodisokolov.github.io/falkonanim/bird/bird_export.json", "loop1", true); // Loop1 animation will play
+                loadSkeleton("bird_Export.json", "loop1", true);
                 lastFrameTime = Date.now() / 1000;
                 requestAnimationFrame(render);
             } else {
@@ -84,12 +83,11 @@
             let animationStateData = new spine.AnimationStateData(skeleton.data);
             animationState = new spine.AnimationState(animationStateData);
 
-            // Set the 'loop1' animation instead of the default one
-            animationState.setAnimation(0, "loop1", true);  // Loop1 will play
+            // Set the animation
+            animationState.setAnimation(0, initialAnimation, true);
 
-            bounds = calculateBounds(skeleton);  // Updated bounds function
+            bounds = calculateBounds(skeleton);
 
-            // Returning skeleton, animationState, and bounds so they can be used in the render function
             return {
                 skeleton: skeleton,
                 state: animationState,
